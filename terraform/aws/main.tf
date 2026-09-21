@@ -32,6 +32,7 @@ resource "aws_iam_instance_profile" "app-server-role" {
   name = "app-server-role"
   role = aws_iam_role.app-server-role.name
 }
+
 resource "aws_iam_role" "gitlab-runner-role" {
   name = "gitlab-runner-role"
 
