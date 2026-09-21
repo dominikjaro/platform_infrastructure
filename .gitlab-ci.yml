@@ -5,6 +5,7 @@ variables:
 
   TF_VAR_env_prefix: "dev"
   TF_VAR_runner_registration_token: $RUNNER_TOKEN
+  TF_DIR: "terraform/aws" 
 
 stages:
   - init
@@ -15,14 +16,16 @@ image:
   name: hashicorp/terraform:latest
   entrypoint: [""]
 
+before_script:
+ - cd $TF_DIR
 init:
   stage: init
   script:
     - terraform init
   artifacts:
     paths:
-      - .terraform/
-      - .terraform.lock.hcl
+      - $TF_DIR/.terraform/
+      - $TF_DIR/.terraform.lock.hcl
 
 build:
   stage: build
@@ -30,7 +33,7 @@ build:
     - terraform plan -out "planfile"
   artifacts:
     paths:
-      - planfile
+      - $TF_DIR/planfile
 
 deploy:
   stage: deploy
