@@ -26,6 +26,7 @@ data "aws_security_group" "app-server" {
     values = ["app-server"]
   }
 }
+data "aws_availability_zones" "available" {}
 
 ##########
 # IAM 
@@ -41,8 +42,6 @@ data "aws_iam_policy" "AmazonEC2ContainerRegistryFullAccess" {
 data "aws_iam_policy" "AmazonSSMFullAccess" {
   arn = "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
 }
-data "aws_availability_zones" "available" {}
-
 data "aws_iam_instance_profile" "app-server-role" {
   depends_on = [aws_iam_instance_profile.app-server-role]
   name       = "app-server-role"

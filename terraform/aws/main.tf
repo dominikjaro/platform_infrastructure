@@ -1,19 +1,6 @@
-######## CREATE ROLES ########
-
-# define and get info on needed policies for both roles
-data "aws_iam_policy" "AmazonSSMManagedInstanceCore" {
-  arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-data "aws_iam_policy" "AmazonEC2ContainerRegistryFullAccess" {
-  arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
-}
-
-data "aws_iam_policy" "AmazonSSMFullAccess" {
-  arn = "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
-}
-
-# create role for ec2 service for app-server
+#######
+# Roles
+#######
 resource "aws_iam_role" "app-server-role" {
   name = "app-server-role"
 
@@ -33,25 +20,18 @@ resource "aws_iam_role" "app-server-role" {
 }
 EOF
 }
-
-# attach the needed policies to the created ec2 role
 resource "aws_iam_role_policy_attachment" "policy-attach-ssm" {
   role       = aws_iam_role.app-server-role.name
   policy_arn = data.aws_iam_policy.AmazonSSMManagedInstanceCore.arn
 }
-
 resource "aws_iam_role_policy_attachment" "policy-attach-ecr-full" {
   role       = aws_iam_role.app-server-role.name
   policy_arn = data.aws_iam_policy.AmazonEC2ContainerRegistryFullAccess.arn
 }
-
-# define instance profile, so we can assign the role to our ec2 instance
 resource "aws_iam_instance_profile" "app-server-role" {
   name = "app-server-role"
   role = aws_iam_role.app-server-role.name
 }
-
-# create role for ec2 service for gitlab-runner-server
 resource "aws_iam_role" "gitlab-runner-role" {
   name = "gitlab-runner-role"
 
@@ -71,29 +51,22 @@ resource "aws_iam_role" "gitlab-runner-role" {
 }
 EOF
 }
-
 resource "aws_iam_role_policy_attachment" "policy-attach-ssm-gitlab" {
   role       = aws_iam_role.gitlab-runner-role.name
   policy_arn = data.aws_iam_policy.AmazonSSMFullAccess.arn
 }
-
 resource "aws_iam_role_policy_attachment" "policy-attach-ecr-full-gitlab" {
   role       = aws_iam_role.gitlab-runner-role.name
   policy_arn = data.aws_iam_policy.AmazonEC2ContainerRegistryFullAccess.arn
 }
-
 resource "aws_iam_instance_profile" "gitlab-runner-role" {
   name = "gitlab-runner-role"
   role = aws_iam_role.gitlab-runner-role.name
 }
 
-
-######## CREATE NETWORKING RESOURCES ########
-
-# fetch available zones for the configured region 
-data "aws_availability_zones" "available" {}
-
-# create "main" vpc to launch our instances in
+#######################
+#NETWORKING RESOURCES #
+#######################
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.1.0"
@@ -114,7 +87,6 @@ module "vpc" {
     environment = var.env_prefix
   }
 }
-
 resource "aws_security_group" "main" {
   name   = "main"
   vpc_id = data.aws_vpc.main.id
@@ -139,7 +111,6 @@ resource "aws_security_group" "main" {
     Name = "main"
   }
 }
-
 resource "aws_security_group" "app-server" {
   name   = "app-server"
   vpc_id = data.aws_vpc.main.id
@@ -173,18 +144,19 @@ resource "aws_security_group" "app-server" {
   }
 }
 
-######## CREATE EC2 SERVERS ########
+######
+# EC2
+######
 
 module "ec2_app_server" {
   depends_on = [aws_security_group.app-server]
-  # TF module that creates EC2 instances: https://registry.terraform.io/modules/terraform-aws-modules/ec2-instance/aws/1.0.4             
-  source  = "terraform-aws-modules/ec2-instance/aws"
-  version = "5.2.1"
+  source     = "terraform-aws-modules/ec2-instance/aws"
+  version    = "5.2.1"
 
   name = "app-server"
 
   instance_type               = "t3.small"
-  availability_zone           = element(data.aws_availability_zones.available.names, 0) # get first az from available zones
+  availability_zone           = element(data.aws_availability_zones.available.names, 0)
   ami                         = data.aws_ami.ubuntu.id
   iam_instance_profile        = data.aws_iam_instance_profile.app-server-role.name
   associate_public_ip_address = true
@@ -204,7 +176,6 @@ module "ec2_app_server" {
     delete_on_termination = true
   }]
 }
-
 module "ec2_gitlab_runner" {
   depends_on = [aws_security_group.main]
   source     = "terraform-aws-modules/ec2-instance/aws"
