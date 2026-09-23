@@ -60,14 +60,18 @@ deploy:
     - terraform apply --input=false "planfile"
   when: manual
 
+### DESTROY STAGE ###
 plan-destroy:
   stage: destroy
   script:
-    - terraform plan -destroy 
+    - terraform plan -destroy -out "destroyplan"
   when: manual
+  artifacts:
+    paths:
+      - $TF_DIR/destroyplan
 
 destroy:
   stage: destroy
   script:
-    - terraform --input=false destroy
+    - terraform destroy --input=false "destroyplan"
   when: manual
