@@ -5,6 +5,7 @@ variables:
 
 stages:
   - init
+  - test
   - build
   - deploy
 
@@ -14,14 +15,35 @@ image:
 
 before_script:
  - cd $TF_DIR
+
 init:
   stage: init
   script:
-    - terraform init -upgrade
+    - terraform init
   artifacts:
     paths:
       - $TF_DIR/.terraform/
       - $TF_DIR/.terraform.lock.hcl
+
+validate:
+  stage: test
+  script:
+    - terraform validate
+  allow_failure: true
+
+trivy:
+  stage: test
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - trivy config --format json . > trivy.json
+    - trivy config --exit-code 1 --severity HIGH,CRITICAL .
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - trivy.json
 
 build:
   stage: build
