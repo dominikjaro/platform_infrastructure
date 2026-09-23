@@ -43,7 +43,7 @@ trivy:
   artifacts:
     when: always
     paths:
-      - trivy.json
+      - $TF_DIR/trivy.json
 
 build:
   stage: build
