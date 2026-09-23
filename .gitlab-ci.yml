@@ -8,6 +8,7 @@ stages:
   - test
   - build
   - deploy
+  - destroy
 
 image:
   name: hashicorp/terraform:latest
@@ -57,4 +58,16 @@ deploy:
   stage: deploy
   script:
     - terraform apply --input=false "planfile"
+  when: manual
+
+plan-destroy:
+  stage: destroy
+  script:
+    - terraform plan -destroy 
+  when: manual
+
+destroy:
+  stage: destroy
+  script:
+    - terraform --input=false destroy
   when: manual
