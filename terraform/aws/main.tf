@@ -144,7 +144,6 @@ resource "aws_security_group" "app-server" {
     Name = "app-server"
   }
 }
-
 ######
 # EC2
 ######
