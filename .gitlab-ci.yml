@@ -65,6 +65,7 @@ deploy:
 ### DESTROY STAGE ###
 plan-destroy:
   stage: plan-destroy
+  needs: ["init"]
   script:
     - terraform plan -destroy -out "destroyplan"
   when: manual
@@ -74,6 +75,7 @@ plan-destroy:
 
 destroy:
   stage: destroy
+  needs: ["plan-destroy"]
   script:
     - terraform destroy --input=false "destroyplan"
   when: manual
